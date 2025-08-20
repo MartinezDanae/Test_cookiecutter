@@ -1,0 +1,41 @@
+# general
+batch_size: 32
+optimizer: adam
+loss: cross_entropy
+max_epoch: 1
+exp_name: my_exp_1
+num_workers: 0
+# set to null to avoid setting a seed (can speed up GPU computation, but
+# results will not be reproducible)
+seed: 1234
+
+# loggers
+experiment_loggers:
+  tensorboard: null  # no parameters for tensorboard
+  aim:
+    # change this to an absolute path to always use the same aim db file
+    log_folder: ./
+  # comet: null  << uncomment to use comet - see README for more info on setup 
+
+# architecture
+hidden_dim: 256
+num_classes: 10
+architecture: simple_mlp
+
+# here wew centralize the metric and the mode to use in both early stopping and
+# best checkpoint selection. If instead you want to use different metric/mode,
+# remove this section and define them directly in the early_stopping / best_checkpoint blocks.
+metric_to_use: 'val_loss'
+mode_to_use: 'min'
+
+# early stopping
+early_stopping:
+  metric: ${metric_to_use}
+  mode: ${mode_to_use}
+  patience: 3
+
+# best checkpoint params
+best_checkpoint:
+  metric: ${metric_to_use}
+  mode: ${mode_to_use}
+  every_n_epochs: 1

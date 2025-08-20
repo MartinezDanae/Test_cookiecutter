@@ -1,0 +1,2 @@
+# architecture
+hidden_dim: 'orion~uniform(32,256,discrete=True)'
