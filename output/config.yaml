@@ -1,0 +1,24 @@
+batch_size: 16
+optimizer: adam
+loss: cross_entropy
+max_epoch: 2
+exp_name: my_exp_1
+num_workers: 0
+seed: 1234
+experiment_loggers:
+  tensorboard: null
+  aim:
+    log_folder: ./
+hidden_dim: 256
+num_classes: 10
+architecture: simple_mlp
+metric_to_use: val_loss
+mode_to_use: min
+early_stopping:
+  metric: ${metric_to_use}
+  mode: ${mode_to_use}
+  patience: 3
+best_checkpoint:
+  metric: ${metric_to_use}
+  mode: ${mode_to_use}
+  every_n_epochs: 1

@@ -9,6 +9,7 @@ from pytorch_lightning.loggers import CometLogger
 
 from amlrt_project.data.constants import AIM, COMET, EXP_LOGGERS, TENSORBOARD
 from amlrt_project.utils.aim_logger_utils import prepare_aim_logger
+import sys
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ def get_git_hash(script_location):  # pragma: no cover
 def get_pip_dependencies():  # pragma: no cover
     """Get the pip dependencies for the current env."""
     try:
-        result = subprocess.run(["pip", "freeze"], capture_output=True, text=True, check=True)
+        result = subprocess.run([sys.executable, "-m", "pip", "freeze"], capture_output=True, text=True, check=True)
         return result.stdout.splitlines()
     except subprocess.CalledProcessError as e:
         logger.warning(f"Failed to get pip dependencies: {e}")
