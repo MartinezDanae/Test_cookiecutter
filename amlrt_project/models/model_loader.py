@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Type, Union
 from amlrt_project.models.factory import (AdamFactory, OptimFactory,
                                           PlateauFactory, SchedulerFactory,
                                           SGDFactory, WarmupDecayFactory)
-from amlrt_project.models.my_model import SimpleMLP
+from amlrt_project.models.my_model import SimpleMLP, SimpleCNN
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +79,8 @@ def load_model(hyper_params: Dict[str, Any]):  # pragma: no cover
     # __TODO__ fix architecture list
     if architecture == 'simple_mlp':
         model_class = SimpleMLP
+    elif architecture == 'simple_cnn':
+        model_class = SimpleCNN
     else:
         raise ValueError('architecture {} not supported'.format(architecture))
     logger.info('selected architecture: {}'.format(architecture))

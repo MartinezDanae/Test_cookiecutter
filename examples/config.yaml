@@ -2,8 +2,8 @@
 batch_size: 16
 optimizer: adam
 loss: cross_entropy
-max_epoch: 2
-exp_name: my_exp_1
+max_epoch: 1
+exp_name: my_exp_2
 num_workers: 0
 # set to null to avoid setting a seed (can speed up GPU computation, but
 # results will not be reproducible)
@@ -20,7 +20,13 @@ experiment_loggers:
 # architecture
 hidden_dim: 256
 num_classes: 10
-architecture: simple_mlp
+architecture: simple_mlp # simple_cnn
+
+# CNN-specific
+in_channels: 1     # 1 for MNIST, 3 for RGB datasets
+hidden_channels: 32
+kernel_size: 3
+input_hw: [28, 28] # used to compute the flatten size
 
 # here wew centralize the metric and the mode to use in both early stopping and
 # best checkpoint selection. If instead you want to use different metric/mode,

@@ -113,3 +113,60 @@ class SimpleMLP(BaseModel):  # pragma: no cover
             model, load_loss(hyper_params),
             optim_fact, sched_fact)
         self.save_hyperparameters()  # they will become available via model.hparams
+
+
+class SimpleCNN(BaseModel):  # pragma: no cover
+    """Simple CNN model class.
+
+    Mirrors SimpleMLP style: builds a torch.nn.Module, then calls BaseModel
+    with loss/optim/sched factories, and stores hyperparams via save_hyperparameters().
+    """
+
+    def __init__(
+        self,
+        optim_fact: OptimFactory,
+        sched_fact: SchedulerFactory,
+        hyper_params: typing.Dict[typing.AnyStr, typing.Any],
+    ):
+        # Required hyper-params for this CNN
+        # (You can add more, e.g., dropout/pooling, with defaults if desired.)
+        check_and_log_hp(
+            ['in_channels', 'hidden_channels', 'kernel_size', 'num_classes', 'input_hw'],
+            hyper_params,
+        )
+
+        in_channels: int = int(hyper_params['in_channels'])
+        hidden_channels: int = int(hyper_params['hidden_channels'])
+        kernel_size: int = int(hyper_params['kernel_size'])
+        num_classes: int = int(hyper_params['num_classes'])
+        # e.g., [28, 28] for MNIST, [32, 32] for CIFAR-10
+        H, W = map(int, hyper_params['input_hw'])
+
+        # same-padding for stride=1 convs
+        pad = kernel_size // 2
+
+        # Feature extractor: 2 conv blocks + 2×2 pool each
+        features = nn.Sequential(
+            nn.Conv2d(in_channels, hidden_channels, kernel_size=kernel_size, padding=pad),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Conv2d(hidden_channels, hidden_channels * 2, kernel_size=kernel_size, padding=pad),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            nn.Flatten(),
+        )
+
+        # After two 2×2 pools: H_out = H//4, W_out = W//4
+        h_out, w_out = H // 4, W // 4
+        fc_in = (hidden_channels * 2) * h_out * w_out
+
+        classifier = nn.Sequential(
+            nn.Linear(fc_in, hidden_channels * 4),
+            nn.ReLU(),
+            nn.Linear(hidden_channels * 4, num_classes),
+        )
+
+        model = nn.Sequential(features, classifier)
+
+        super().__init__(model, load_loss(hyper_params), optim_fact, sched_fact)
+        self.save_hyperparameters()  # makes them available as model.hparams
