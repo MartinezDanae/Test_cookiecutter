@@ -6,7 +6,7 @@ from dataclasses import MISSING, dataclass, field
 from typing import Any, Dict, Iterable, Optional, Tuple
 
 from torch.nn import Parameter
-from torch.optim import SGD, Adam, Optimizer
+from torch.optim import SGD, Adam, AdamW, Adagrad, Optimizer
 from torch.optim.lr_scheduler import LambdaLR, ReduceLROnPlateau
 
 
@@ -114,7 +114,7 @@ class WarmupDecayFactory(SchedulerFactory):
 @dataclass
 class SGDFactory(OptimFactory):
     """Factory for SGD optimizers."""
-    lr: float = MISSING   # Value is required.
+    lr: float = 1e-3   # Value is required.
     momentum: float = 0
     dampening: float = 0
     weight_decay: float = 0
@@ -131,7 +131,7 @@ class SGDFactory(OptimFactory):
 @dataclass
 class AdamFactory(OptimFactory):
     """Factory for ADAM optimizers."""
-    lr: float = 1e-3  # `MISSING` if we want to require an explicit value.
+    lr: float = 1e-3
     betas: Tuple[float, float] = (0.9, 0.999)
     eps: float = 1e-8
     weight_decay: float = 0
@@ -144,3 +144,35 @@ class AdamFactory(OptimFactory):
             betas=self.betas, eps=self.eps,
             weight_decay=self.weight_decay,
             amsgrad=self.amsgrad)
+
+
+@dataclass
+class AdamWFactory(OptimFactory):
+    lr: float = 1e-3
+    betas: Tuple[float, float] = (0.9, 0.999)
+    eps: float = 1e-8
+    weight_decay: float = 0.01
+    amsgrad: bool = False
+
+    def __call__(self, parameters: Iterable[Parameter]) -> AdamW:
+        return AdamW(
+            parameters, lr=self.lr, betas=self.betas, eps=self.eps,
+            weight_decay=self.weight_decay, amsgrad=self.amsgrad
+        )
+
+
+@dataclass
+class AdagradFactory(OptimFactory):
+    lr: float = 1e-2
+    lr_decay: float = 0.0
+    weight_decay: float = 0.0
+    initial_accumulator_value: float = 0.0
+    eps: float = 1e-10
+
+    def __call__(self, parameters: Iterable[Parameter]) -> Adagrad:
+        return Adagrad(
+            parameters, lr=self.lr, lr_decay=self.lr_decay,
+            weight_decay=self.weight_decay,
+            initial_accumulator_value=self.initial_accumulator_value,
+            eps=self.eps
+        )

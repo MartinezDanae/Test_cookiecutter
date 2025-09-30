@@ -3,7 +3,8 @@ from typing import Any, Dict, Optional, Type, Union
 
 from amlrt_project.models.factory import (AdamFactory, OptimFactory,
                                           PlateauFactory, SchedulerFactory,
-                                          SGDFactory, WarmupDecayFactory)
+                                          SGDFactory, WarmupDecayFactory, 
+                                          AdamWFactory, AdagradFactory)
 from amlrt_project.models.my_model import SimpleMLP, SimpleCNN
 
 logger = logging.getLogger(__name__)
@@ -13,7 +14,11 @@ OPTS = {
     'SGD': SGDFactory,
     'sgd': SGDFactory,
     'Adam': AdamFactory,
-    'adam': AdamFactory
+    'adam': AdamFactory, 
+    'adamW': AdamWFactory, 
+    'AdamW': AdamWFactory, 
+    'Adagrad': AdagradFactory,
+    'adagrad': AdagradFactory,
 }
 
 SCHEDS = {
