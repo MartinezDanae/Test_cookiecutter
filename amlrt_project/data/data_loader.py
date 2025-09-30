@@ -1,12 +1,12 @@
 import logging
 import typing
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 
 import numpy as np
 import pytorch_lightning as pl
 import torch
-from torch.utils.data import DataLoader, Dataset
-from torchvision import transforms
+from torch.utils.data import DataLoader, Dataset, random_split
+from torchvision import transforms, datasets
 
 from amlrt_project.data.data_preprocess import FashionMnistParser
 from amlrt_project.utils.hp_utils import check_and_log_hp
@@ -118,4 +118,118 @@ class FashionMnistDM(pl.LightningDataModule):  # pragma: no cover
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,
+        )
+
+
+class FashionMnistTVDM(pl.LightningDataModule):
+    """Lightning DataModule backed by torchvision.datasets.FashionMNIST.
+
+    Constructor kept compatible with the original cookiecutter version:
+        __init__(data_dir, hyper_params)
+    Required hyper_params: batch_size, num_workers
+    Optional hyper_params:
+        - val_split (int, default=5000)
+        - normalize (tuple(mean, std), default=(0.2860, 0.3530))
+        - pin_memory (bool, default=True)
+        - persistent_workers (bool, default=True)
+        - shuffle (bool, default=True)  # train loader
+        - drop_last (bool, default=False)  # train loader
+        - seed (int, default=42)  # for deterministic split
+    """
+
+    def __init__(
+            self, 
+            data_dir: typing.AnyStr, 
+            hyper_params: typing.Dict[typing.AnyStr, typing.Any]
+    ):
+        """Validates the hyperparameter config dictionary and sets up internal attributes."""
+        super().__init__()
+        check_and_log_hp(["batch_size", "num_workers"], hyper_params)
+
+        self.data_dir: str = str(data_dir)
+        self.batch_size: int = int(hyper_params["batch_size"])
+        self.num_workers: int = int(hyper_params["num_workers"])
+
+        # Optional knobs with sensible defaults (all pulled from hyper_params if present)
+        self.val_split: int = int(hyper_params.get("val_split", 5000))
+        mean, std = hyper_params.get("normalize", (0.2860, 0.3530))
+        self.normalize: Tuple[float, float] = (float(mean), float(std))
+
+        self.pin_memory: bool = bool(hyper_params.get("pin_memory", True))
+        self.persistent_workers: bool = bool(hyper_params.get("persistent_workers", True))
+        self.shuffle: bool = bool(hyper_params.get("shuffle", True))
+        self.drop_last: bool = bool(hyper_params.get("drop_last", False))
+        self.seed: int = int(hyper_params.get("seed", 42))
+
+        # Will be populated in setup()
+        self.train_set = None
+        self.val_set = None
+        self.test_set = None
+
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((self.normalize[0],), (self.normalize[1],))
+        ])
+
+    # ---- Lightning hooks ----
+    def prepare_data(self) -> None:
+        """Download once on a single process."""
+        datasets.FashionMNIST(root=self.data_dir, train=True, download=True)
+        datasets.FashionMNIST(root=self.data_dir, train=False, download=True)
+
+    def setup(self, stage: Optional[str] = None) -> None:
+        """Create datasets/splits on every process."""
+        if stage in (None, "fit"):
+            full_train = datasets.FashionMNIST(
+                root=self.data_dir, train=True, transform=self.transform, download=False
+            )
+            if self.val_split > 0:
+                train_len = len(full_train) - self.val_split
+                # deterministic split
+                self.train_set, self.val_set = random_split(
+                    full_train,
+                    [train_len, self.val_split],
+                    generator=torch.Generator().manual_seed(self.seed),
+                )
+            else:
+                self.train_set = full_train
+                self.val_set = None
+
+        if stage in (None, "test", "validate"):
+            self.test_set = datasets.FashionMNIST(
+                root=self.data_dir, train=False, transform=self.transform, download=False
+            )
+
+    # ---- Dataloaders ----
+    def train_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.train_set,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            drop_last=self.drop_last,
+            persistent_workers=self.persistent_workers if self.num_workers > 0 else False,
+        )
+
+    def val_dataloader(self) -> Optional[DataLoader]:
+        if self.val_set is None:
+            return None
+        return DataLoader(
+            self.val_set,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            persistent_workers=self.persistent_workers if self.num_workers > 0 else False,
+        )
+
+    def test_dataloader(self) -> DataLoader:
+        return DataLoader(
+            self.test_set,
+            batch_size=self.batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            persistent_workers=self.persistent_workers if self.num_workers > 0 else False,
         )

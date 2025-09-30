@@ -14,7 +14,7 @@ import pytorch_lightning as pl
 from orion.client import report_results
 from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint
 
-from amlrt_project.data.data_loader import FashionMnistDM
+from amlrt_project.data.data_loader import FashionMnistDM, FashionMnistTVDM
 from amlrt_project.models.model_loader import load_model
 from amlrt_project.utils.config_utils import (
     add_config_file_params_to_argparser, load_configs, save_hparams)
@@ -122,7 +122,12 @@ def run(args, data_dir, output_dir, hyper_params):
 
     log_exp_details(os.path.realpath(__file__), args)
 
-    datamodule = FashionMnistDM(data_dir, hyper_params)
+    #datamodule = FashionMnistDM(data_dir, hyper_params)
+
+    if hyper_params["use_torchvision_dm"]:
+        datamodule = FashionMnistTVDM(data_dir, hyper_params)
+    else: 
+        datamodule = FashionMnistDM(data_dir, hyper_params)
     model = load_model(hyper_params)
 
     train(model=model, datamodule=datamodule, output=output_dir, hyper_params=hyper_params,

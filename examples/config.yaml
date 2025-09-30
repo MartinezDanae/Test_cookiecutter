@@ -28,6 +28,10 @@ hidden_channels: 32
 kernel_size: 3
 input_hw: [28, 28] # used to compute the flatten size
 
+# datamodule 
+use_torchvision_dm: true #  set to false to use the original DM
+normalize: [0.1307, 0.3081] # per-channel mean/std for grayscale FashionMNIST
+
 # here wew centralize the metric and the mode to use in both early stopping and
 # best checkpoint selection. If instead you want to use different metric/mode,
 # remove this section and define them directly in the early_stopping / best_checkpoint blocks.
