@@ -233,3 +233,20 @@ class FashionMnistTVDM(pl.LightningDataModule):
             pin_memory=self.pin_memory,
             persistent_workers=self.persistent_workers if self.num_workers > 0 else False,
         )
+    
+
+def load_dataset(data_dir: str, hyper_params: dict) -> pl.LightningDataModule:
+    """
+    Select the between torch vision pre-defined data class and the original one.
+    """
+    dataclass = hyper_params.get("dataclass", "").lower()
+
+    match dataclass:
+        case "fashionmnisttvdm":
+            datamodule = FashionMnistTVDM(data_dir, hyper_params)
+            logger.info('Using FashionMnistTVDM')
+        case _: 
+            datamodule = FashionMnistDM(data_dir, hyper_params)
+            logger.info('Using FashionMnistDM')
+
+    return datamodule
