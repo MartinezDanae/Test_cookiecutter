@@ -1,6 +1,6 @@
 import logging
 from typing import Any, Dict, Optional, Type, Union
-
+from omegaconf import OmegaConf, DictConfig
 from amlrt_project.models.factory import (AdamFactory, OptimFactory,
                                           PlateauFactory, SchedulerFactory,
                                           SGDFactory, WarmupDecayFactory, 
@@ -29,11 +29,15 @@ SCHEDS = {
 }
 
 
-def parse_opt_hp(hyper_params: Union[str, Dict[str, Any]]) -> OptimFactory:
+def parse_opt_hp(hyper_params: Union[str, Dict[str, Any], DictConfig]) -> OptimFactory:
     """Parse the optimizer part of the config."""
     if isinstance(hyper_params, str):
         algo = hyper_params
         args = {}
+    elif isinstance(hyper_params, DictConfig):
+        hp = OmegaConf.to_container(hyper_params, resolve=True)
+        algo = hp['algo']
+        args = {key: hp[key] for key in hp if key != 'algo'}
     elif isinstance(hyper_params, dict):
         algo = hyper_params['algo']
         args = {key: hyper_params[key] for key in hyper_params if key != 'algo'}

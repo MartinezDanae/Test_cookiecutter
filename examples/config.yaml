@@ -1,13 +1,19 @@
 # general
 batch_size: 16
-optimizer: adam
+
+optimizer:
+  algo: 'SGD' # adagrad, AdamW, sgd, adam
+  lr: 0.001
+  momentum: 0.0001
+
 loss: cross_entropy
 max_epoch: 1
-exp_name: my_exp_2
+exp_name: my_exp_sgd_cnn
 num_workers: 0
 # set to null to avoid setting a seed (can speed up GPU computation, but
 # results will not be reproducible)
 seed: 1234
+
 
 # loggers
 experiment_loggers:
@@ -20,7 +26,7 @@ experiment_loggers:
 # architecture
 hidden_dim: 256
 num_classes: 10
-architecture: simple_mlp # simple_cnn
+architecture: simple_cnn #simple_mlp # simple_cnn
 
 # CNN-specific
 in_channels: 1     # 1 for MNIST, 3 for RGB datasets
@@ -29,7 +35,7 @@ kernel_size: 3
 input_hw: [28, 28] # used to compute the flatten size
 
 # datamodule 
-use_torchvision_dm: true #  set to false to use the original DM
+#dataclass: FashionMnistTVDM # remove if you want to use original dataclass for load data
 normalize: [0.1307, 0.3081] # per-channel mean/std for grayscale FashionMNIST
 
 # here wew centralize the metric and the mode to use in both early stopping and
